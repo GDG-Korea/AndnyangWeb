@@ -23,9 +23,16 @@ const (
 
 const page = `
 {{range .}}
-<li>{{.}}</li>
+<li>{{printf "%02d" .Hour}}:{{printf "%02d" .Min}} [{{.Nick}}] {{.Message}}</li>
 {{end}}
 `
+
+type Log struct {
+	Hour int
+	Min int
+	Nick string
+	Message string
+}
 
 func logHandler(w http.ResponseWriter, r *http.Request) {
 	const lenPath = len(logPrefix)
@@ -56,7 +63,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, error.Error())
 	}
 
-	templateRows := []string{}
+	logs := []Log{}
 
 	for rows.Next() {
 		var id int
@@ -73,8 +80,14 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		hour := localTime.Hour()
 		min := localTime.Minute()
 		//fmt.Fprintf(w, "<li>%d:%d [%s] %s</li>", hour, min, nick, message)
-		line := fmt.Sprintf("%d:%d [%s] %s", hour, min, nick, message)
-		templateRows = append(templateRows, line)
+		//line := fmt.Sprintf("%d:%d [%s] %s", hour, min, nick, message)
+		log := Log {
+			Hour: hour,
+			Min: min,
+			Nick: nick,
+			Message: message,
+		}
+		logs = append(logs, log)
 	}
 
 	t := template.New("hello template")
@@ -82,7 +95,8 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 	if error != nil {
 		log.Print(error)
 	}
-	t.Execute(w, templateRows)
+
+	t.Execute(w, logs)
 }
 
 func main() {
