@@ -35,7 +35,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	db, error := sql.Open("postgres", "user=dalinaum password=gdg dbname=andnyang sslmode=disable")
+	db, error := sql.Open("postgres", "user=postgres password=gdg dbname=andnyang sslmode=disable")
 	if error != nil {
 		log.Print(error)
 		fmt.Fprintf(w, error.Error())
