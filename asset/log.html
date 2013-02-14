@@ -7,9 +7,6 @@
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
-      ul li {
-	      list-style-type: none;
-      }
       .date {
 	      color: #555555;
 	      font-size: 9pt;
@@ -17,7 +14,7 @@
     </style>
 </head>
 <body>
-<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
           <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -37,12 +34,16 @@
     </div>
 
     <div class="container">
-<h1>Web Log Viewer</h1>
-<ul>
+<h2>Log Viewer</h2>
+<table class="table table-striped">
 {{range .}}
-<li><span class="date">{{printf "%02d" .Hour}}:{{printf "%02d" .Min}}</span> <strong>{{.Nick}}</strong>: {{.Message}}</li>
+<tr>
+<td><span class="date">{{printf "%02d" .Hour}}:{{printf "%02d" .Min}}</span></td>
+<td><strong>{{.Nick}}</strong>:</td>
+<td>{{.Message}}</td>
+</tr>
 {{end}}
-</ul>
+</table>
 </div>
 <script src="http://code.jquery.com/jquery.js"></script>
 <script src="/js/bootstrap.min.js"></script>
