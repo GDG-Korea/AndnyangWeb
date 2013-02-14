@@ -7,10 +7,6 @@
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
-      .date {
-	      color: #555555;
-	      font-size: 9pt;
-      }
     </style>
 </head>
 <body>
@@ -22,10 +18,10 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="#">Andnyang</a>
+          <a class="brand" href="#">Andnyang Log Viewer</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li><a href="/log/gdgwomen">#gdgwomen</a></li>
+              <li class="active"><a href="/log/gdgwomen">#gdgwomen</a></li>
               <li><a href="/log/gdgand">#gdgand</a></li>
             </ul>
           </div><!--/.nav-collapse -->
@@ -34,7 +30,6 @@
     </div>
 
     <div class="container">
-<h2>Log Viewer</h2>
 <table class="table table-striped">
 {{range .}}
 <tr>
