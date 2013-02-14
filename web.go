@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"io/ioutil"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,8 +91,14 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		logs = append(logs, log)
 	}
 
+	filename := "log.html"
+	body, error := ioutil.ReadFile(filename)
+	if error != nil {
+		body = []byte(page)
+	}	
+
 	t := template.New("hello template")
-	t, error = t.Parse(page)
+	t, error = t.Parse(string(body))
 	if error != nil {
 		log.Print(error)
 	}
@@ -102,5 +109,10 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", helloHandler)
 	http.HandleFunc(logPrefix, logHandler)
+
+	http.Handle("/css/", http.StripPrefix("/css", http.FileServer(http.Dir("./css"))))
+	http.Handle("/js/", http.StripPrefix("/js", http.FileServer(http.Dir("./js"))))
+	http.Handle("/img/", http.StripPrefix("/img", http.FileServer(http.Dir("./img"))))
+
 	http.ListenAndServe(":5000", nil)
 }
