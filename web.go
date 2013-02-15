@@ -30,6 +30,16 @@ type Log struct {
 	Message string
 }
 
+type LogContainer struct {
+	Logs           []Log
+	PreviousDate   string
+	PreviousLink   string
+	NextDate       string
+	NextLink       string
+	CurrentChannel string
+	OtherChannels  []string
+}
+
 func getSurfixQuery(year int, month time.Month, day int) string {
 	const TF_SQL = "20060102 15:04:05"
 	const TF_CALENDAR = "20060102 15:04:05 -0700"
@@ -37,6 +47,24 @@ func getSurfixQuery(year int, month time.Month, day int) string {
 	st = st.UTC()
 	et := st.AddDate(0, 0, 1)
 	return fmt.Sprintf(" and date between '%s' and '%s'", st.Format(TF_SQL), et.Format(TF_SQL))
+}
+
+func getSurfixQueryWithDateQuery(dateQuery string) string {
+	year, _ := strconv.Atoi(dateQuery[0:4])
+	monthNumber, _ := strconv.Atoi(dateQuery[4:6])
+	month := time.Month(monthNumber)
+	day, _ := strconv.Atoi(dateQuery[6:])
+	return getSurfixQuery(year, month, day)
+}
+
+func getOtherDateQueryAndLink(dateQuery, channel string, after int) (string, string) {
+	year, _ := strconv.Atoi(dateQuery[0:4])
+	month, _ := strconv.Atoi(dateQuery[4:6])
+	day, _ := strconv.Atoi(dateQuery[6:])
+	newDate := fmt.Sprintf("%4d / %2d / %2d", year, month, day+after)
+	linkDate := fmt.Sprintf("%04d%02d%02d", year, month, day+after)
+	link := fmt.Sprintf("/log/%s/%s", channel, linkDate)
+	return newDate, link
 }
 
 func logHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,15 +97,10 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		path := fmt.Sprintf("/log/%s/%04d%02d%02d", channel, year, month, day)
 		http.Redirect(w, r, path, http.StatusFound)
 		return
-	} else {
-		dateQuery := queries[1]
-		year, _ := strconv.Atoi(dateQuery[0:4])
-		monthNumber, _ := strconv.Atoi(dateQuery[4:6])
-		month := time.Month(monthNumber)
-		day, _ := strconv.Atoi(dateQuery[6:])
-		surfix := getSurfixQuery(year, month, day)
-		sqlString = sqlString + surfix
 	}
+
+	dateQuery := queries[1]
+	sqlString = sqlString + getSurfixQueryWithDateQuery(dateQuery)
 
 	rows, error := db.Query(sqlString)
 	if error != nil {
@@ -122,7 +145,35 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(error)
 	}
 
-	t.Execute(w, logs)
+	channels := []string{
+		"gdgand",
+		"gdgwomen",
+	}
+	currentIndex := -1
+	for i, v := range channels {
+		if v == channel {
+			currentIndex = i
+			break
+		}
+	}
+	if currentIndex != -1 {
+		lastChannelIndex := len(channels) - 1
+		channels[currentIndex] = channels[lastChannelIndex]
+		channels = channels[0:lastChannelIndex]
+	}
+
+	previousDate, previousLink := getOtherDateQueryAndLink(dateQuery, channel, -1)
+	nextDate, nextLink := getOtherDateQueryAndLink(dateQuery, channel, 1)
+	container := LogContainer{
+		Logs:           logs,
+		PreviousDate:   previousDate,
+		PreviousLink:   previousLink,
+		NextDate:       nextDate,
+		NextLink:       nextLink,
+		CurrentChannel: channel,
+		OtherChannels:  channels,
+	}
+	t.Execute(w, container)
 }
 
 func main() {
