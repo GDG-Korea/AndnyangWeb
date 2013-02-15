@@ -24,6 +24,7 @@ const (
 )
 
 type Log struct {
+	Id      int
 	Hour    int
 	Min     int
 	Nick    string
@@ -125,6 +126,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		min := localTime.Minute()
 
 		log := Log{
+			Id:      id,
 			Hour:    hour,
 			Min:     min,
 			Nick:    nick,

@@ -39,9 +39,9 @@
 <table class="table table-striped">
 {{range .Logs}}
 <tr>
-<td><span class="date">{{printf "%02d" .Hour}}:{{printf "%02d" .Min}}</span></td>
+	<td><span class="date"><a href="#{{.Id}}">{{printf "%02d" .Hour}}:{{printf "%02d" .Min}}</a></span></td>
 <td><strong>{{.Nick}}</strong>:</td>
-<td>{{.Message}}</td>
+<td id="{{.Id}}">{{.Message}}</td>
 </tr>
 {{end}}
 </table>
