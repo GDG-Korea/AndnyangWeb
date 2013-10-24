@@ -41,7 +41,7 @@ type LogContainer struct {
 	OtherChannels  []string
 }
 
-func getSurfixQuery(year int, month time.Month, day int) string {
+func getSuffixQuery(year int, month time.Month, day int) string {
 	const TF_SQL = "20060102 15:04:05"
 	const TF_CALENDAR = "20060102 15:04:05 -0700"
 	st, _ := time.Parse(TF_CALENDAR, fmt.Sprintf("%04d%02d%02d 00:00:00 +0900", year, month, day))
@@ -50,12 +50,12 @@ func getSurfixQuery(year int, month time.Month, day int) string {
 	return fmt.Sprintf(" and date between '%s' and '%s'", st.Format(TF_SQL), et.Format(TF_SQL))
 }
 
-func getSurfixQueryWithDateQuery(dateQuery string) string {
+func getSuffixQueryWithDateQuery(dateQuery string) string {
 	year, _ := strconv.Atoi(dateQuery[0:4])
 	monthNumber, _ := strconv.Atoi(dateQuery[4:6])
 	month := time.Month(monthNumber)
 	day, _ := strconv.Atoi(dateQuery[6:])
-	return getSurfixQuery(year, month, day)
+	return getSuffixQuery(year, month, day)
 }
 
 func getOtherDateQueryAndLink(dateQuery, channel string, after int) (string, string) {
@@ -101,7 +101,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dateQuery := queries[1]
-	sqlString = sqlString + getSurfixQueryWithDateQuery(dateQuery)
+	sqlString = sqlString + getSuffixQueryWithDateQuery(dateQuery)
 
 	rows, error := db.Query(sqlString)
 	if error != nil {
