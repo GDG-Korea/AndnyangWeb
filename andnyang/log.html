@@ -16,9 +16,9 @@
           <a class="brand" href="#">Andnyang Log Viewer</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-		    <li class="active"><a href="/log/{{.CurrentChannel}}">#{{.CurrentChannel}}</a></li>
+		    <li class="active"><a href="/{{.CurrentChannel}}">#{{.CurrentChannel}}</a></li>
 		    {{range .OtherChannels}}
-		    <li><a href="/log/{{.}}">#{{.}}</a></li>
+		    <li><a href="/{{.}}">#{{.}}</a></li>
 	      {{end}}
             </ul>
           </div><!--/.nav-collapse -->

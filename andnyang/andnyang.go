@@ -1,9 +1,9 @@
-package main
+package andnyang
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/bmizerany/pq"
+	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -16,8 +16,6 @@ import (
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hello world!")
 }
-
-const logPrefix string = "/log/"
 
 const (
 	TF_LOG = "12:30 PM"
@@ -42,7 +40,7 @@ type LogContainer struct {
 }
 
 func getSuffixQuery(year int, month time.Month, day int) string {
-	const TF_SQL = "20060102 15:04:05"
+	const TF_SQL = "2006-01-02 15:04:05"
 	const TF_CALENDAR = "20060102 15:04:05 -0700"
 	st, _ := time.Parse(TF_CALENDAR, fmt.Sprintf("%04d%02d%02d 00:00:00 +0900", year, month, day))
 	st = st.UTC()
@@ -64,25 +62,29 @@ func getOtherDateQueryAndLink(dateQuery, channel string, after int) (string, str
 	day, _ := strconv.Atoi(dateQuery[6:])
 	newDate := fmt.Sprintf("%4d / %2d / %2d", year, month, day+after)
 	linkDate := fmt.Sprintf("%04d%02d%02d", year, month, day+after)
-	link := fmt.Sprintf("/log/%s/%s", channel, linkDate)
+	link := fmt.Sprintf("/%s/%s", channel, linkDate)
 	return newDate, link
 }
 
 func logHandler(w http.ResponseWriter, r *http.Request) {
-	const lenPath = len(logPrefix)
-	queryString := r.URL.Path[lenPath:]
-
+	queryString := r.URL.Path
 	queries := strings.Split(queryString, "/")
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	db, error := sql.Open("postgres", "user=postgres password=gdg dbname=andnyang sslmode=disable")
+        //db, error := sql.Open("mysql", "gdg:gdg@tcp(173.194.105.240:3306)/andnyang?parseTime=true")
+        db, error := sql.Open("mysql", "gdg@cloudsql(andnyang:andnyangdb)/andnyang?parseTime=true")
 	if error != nil {
-		log.Print(error)
+                fmt.Fprint(w, "sql open failed!")
 		fmt.Fprintf(w, error.Error())
 	}
 
-	channel := queries[0]
+        if (len(queries) < 2) {
+            return
+        }
+
+	channel := queries[1]
+        log.Printf("channel: %s", channel)
 
 	if len(channel) == 0 {
 		return
@@ -90,22 +92,26 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 
 	sqlString := fmt.Sprintf("select * from andnyang_log where channel='#%s'", channel)
 
-	if len(queries) != 2 || len(queries[1]) != 8 {
+        log.Printf("len of queries: %d", len(queries))
+	if len(queries) != 3 || len(queries[2]) != 8 {
 		now := time.Now().Local()
 		year := now.Year()
 		month := now.Month()
 		day := now.Day()
-		path := fmt.Sprintf("/log/%s/%04d%02d%02d", channel, year, month, day)
+		path := fmt.Sprintf("/%s/%04d%02d%02d", channel, year, month, day)
 		http.Redirect(w, r, path, http.StatusFound)
 		return
 	}
 
-	dateQuery := queries[1]
+	dateQuery := queries[2]
 	sqlString = sqlString + getSuffixQueryWithDateQuery(dateQuery)
+        log.Print(sqlString)
 
 	rows, error := db.Query(sqlString)
 	if error != nil {
+                log.Print("db query failed!")
 		fmt.Fprintf(w, error.Error())
+                return
 	}
 
 	logs := []Log{}
@@ -119,7 +125,9 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 
 		error := rows.Scan(&id, &date, &channel, &nick, &message)
 		if error != nil {
+                        fmt.Fprint(w, "scan failed!")
 			fmt.Fprintf(w, error.Error())
+                        return
 		}
 		localTime := date.Local()
 		hour := localTime.Hour()
@@ -135,7 +143,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		logs = append(logs, log)
 	}
 
-	filename := "log.html"
+	filename := "andnyang/log.html"
 	body, error := ioutil.ReadFile(filename)
 	if error != nil {
 		log.Print(error)
@@ -178,13 +186,6 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, container)
 }
 
-func main() {
-	http.HandleFunc("/", helloHandler)
-	http.HandleFunc(logPrefix, logHandler)
-
-	http.Handle("/css/", http.StripPrefix("/css", http.FileServer(http.Dir("./css"))))
-	http.Handle("/js/", http.StripPrefix("/js", http.FileServer(http.Dir("./js"))))
-	http.Handle("/img/", http.StripPrefix("/img", http.FileServer(http.Dir("./img"))))
-
-	http.ListenAndServe(":5000", nil)
+func init() {
+	http.HandleFunc("/", logHandler)
 }

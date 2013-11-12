@@ -1,0 +1,18 @@
+application: andnyang
+version: 2
+runtime: go
+api_version: go1
+
+handlers:
+- url: /css
+  static_dir: css
+
+- url: /img
+  static_dir: img
+
+- url: /js
+  static_dir: js
+
+- url: /.*
+  script: _go_app
+
